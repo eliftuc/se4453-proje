@@ -11,8 +11,19 @@ KV_URL = "https://kv-se4453-elif.vault.azure.net/"
 credential = DefaultAzureCredential()
 client = SecretClient(vault_url=KV_URL, credential=credential)
 
+# Ana sayfa (Burası sadece karşılama ekranı)
 @app.route('/')
 def index():
+    return """
+    <body style='font-family:sans-serif; text-align:center; padding-top:50px;'>
+        <h1>Grup 11 - Azure Projesine Hoş Geldiniz!</h1>
+        <p>Veritabanı bağlantı testi ve gereksinimler için lütfen <a href='/hello' style='color:#0078d4; font-weight:bold;'>/hello</a> uç noktasına (endpoint) gidiniz.</p>
+    </body>
+    """
+
+# Kılavuzun istediği zorunlu /hello uç noktası
+@app.route('/hello')
+def hello():
     try:
         # 1. Key Vault'tan Sırları Çekiyoruz
         db_host = client.get_secret("DB-HOST").value
@@ -27,47 +38,19 @@ def index():
             password=db_pass,
             port=5432
         )
-        conn.autocommit = True # Otomatik kaydetmeyi açıyoruz
-        cur = conn.cursor()
-
-        # 3. Tablo Oluşturma (Eğer yoksa)
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS proje_ekibi (
-                id SERIAL PRIMARY KEY,
-                isim VARCHAR(50),
-                gorev VARCHAR(100)
-            );
-        """)
-
-        # 4. Tablo boşsa örnek veri ekleme
-        cur.execute("SELECT COUNT(*) FROM proje_ekibi;")
-        if cur.fetchone()[0] == 0:
-            cur.execute("INSERT INTO proje_ekibi (isim, gorev) VALUES ('Elif', 'Bulut Mimarı - VNET & Key Vault');")
-            cur.execute("INSERT INTO proje_ekibi (isim, gorev) VALUES ('Grup 11', 'Konfigürasyon 8 Dağıtımı');")
-
-        # 5. Verileri Okuma
-        cur.execute("SELECT isim, gorev FROM proje_ekibi;")
-        kayitlar = cur.fetchall()
         
-        # 6. HTML Çıktısı Hazırlama
-        tablo_html = "<table style='margin: 0 auto; border-collapse: collapse; width: 60%;'>"
-        tablo_html += "<tr style='background-color: #0078d4; color: white;'><th style='padding: 10px; border: 1px solid #ddd;'>İsim</th><th style='padding: 10px; border: 1px solid #ddd;'>Görev (Rol)</th></tr>"
-        
-        for satir in kayitlar:
-            tablo_html += f"<tr><td style='padding: 10px; border: 1px solid #ddd;'>{satir[0]}</td><td style='padding: 10px; border: 1px solid #ddd;'>{satir[1]}</td></tr>"
-        tablo_html += "</table>"
+        # Bağlantıyı test edip kapatıyoruz (Tablo oluşturma kısımları silindi)
+        conn.close()
 
-        return f"""
+        return """
         <body style='font-family:sans-serif; text-align:center; padding-top:50px; background-color:#f9f9f9;'>
-            <h1 style='color:#0078d4;'>Tebrikler Elif! 🚀</h1>
-            <p style='font-size:1.2em;'>Uygulaman şu an <b>Key Vault</b> üzerinden şifrelerini alıyor<br>
-            ve <b>VNET Integration</b> ile kapalı ağdaki veritabanında işlem yapıyor.</p>
+            <h1 style='color:#0078d4;'>Hello Azure! 🚀</h1>
+            <p style='font-size:1.2em;'>Bu uç nokta (endpoint) kılavuz gereksinimlerine uygun olarak <b>Key Vault</b> üzerinden şifrelerini alarak<br>
+            <b>VNET Integration</b> ile kapalı ağdaki veritabanına bağlanmıştır.</p>
             <div style='background:white; padding:20px; border-radius:10px; display:inline-block; border: 1px solid #ccc; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom:20px;'>
-                <b>Bağlantı Durumu:</b> ✅ Veritabanına Başarıyla Bağlanıldı!<br>
-                <b>Tablo Durumu:</b> ✅ Veri Okuma/Yazma Başarılı!
+                <b>Sır Yönetimi:</b> ✅ Key Vault'tan şifreler başarıyla çekildi!<br>
+                <b>Bağlantı Durumu:</b> ✅ Veritabanına Başarıyla Bağlanıldı!
             </div>
-            <br>
-            {tablo_html}
         </body>
         """
 
